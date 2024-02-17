@@ -1,21 +1,27 @@
 import "./App.css";
 import Employee from "./components/Employee";
+import { useState } from "react";
 
 function App() {
-  console.log("we are about to list the employees");
+  const [role, setRole] = useState();
   const showEmployees = true;
   return (
     <div className="App">
       {showEmployees ? (
         <>
-          <Employee />
-          <Employee />
-          <Employee />
-          <Employee />
-          <Employee />
+          <input
+            type="text"
+            onChange={(e) => {
+              console.log(e.target.value);
+              setRole(e.target.value);
+            }}
+          />
+          <Employee name="Caleb" role="Intern" />
+          <Employee name="Abby" role={role} />
+          <Employee name="John" />
         </>
       ) : (
-        <p>you can not see the employees</p>
+        <p>You can not see the employees</p>
       )}
     </div>
   );
