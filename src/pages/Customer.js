@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import NotFound from "../components/NotFound";
 import { baseUrl } from "../shared";
+import { LoginContext } from "../App";
 
 function Customer() {
+  const [loggedIn, setLoggedIn] = useContext(LoginContext);
+
   const { id } = useParams();
   const navigate = useNavigate();
   const [customer, setCustomer] = useState();
@@ -25,11 +28,23 @@ function Customer() {
 
   useEffect(() => {
     const url = baseUrl + "/api/customers/" + id;
-    fetch(url)
+    fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("access"),
+      },
+    })
       .then((response) => {
         if (response.status === 404) {
           //render a 404 component in this page
           setNotFound(true);
+        } else if (response.status === 401) {
+          setLoggedIn(false);
+          navigate("/login", {
+            state: {
+              previousUrl: location.pathname,
+            },
+          });
         }
 
         if (!response.ok) {
@@ -54,10 +69,21 @@ function Customer() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: "Bearer " + localStorage.getItem("access"),
       },
       body: JSON.stringify(tempCustomer),
     })
       .then((response) => {
+        if (response.status === 401) {
+          setLoggedIn(false);
+
+          navigate("/login", {
+            state: {
+              previousUrl: location.pathname,
+            },
+          });
+        }
+
         if (!response.ok) throw new Error("Something went wrong");
         return response.json();
       })
@@ -150,9 +176,20 @@ function Customer() {
                   method: "DELETE",
                   headers: {
                     "Content-Type": "application/json",
+                    Authorization: "Bearer " + localStorage.getItem("access"),
                   },
                 })
                   .then((response) => {
+                    if (response.status === 401) {
+                      setLoggedIn(false);
+
+                      navigate("/login", {
+                        state: {
+                          previousUrl: location.pathname,
+                        },
+                      });
+                    }
+
                     if (!response.ok) {
                       throw new Error("Something went wrong");
                     }

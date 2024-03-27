@@ -1,60 +1,50 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { baseUrl } from "../shared";
 import AddCustomer from "../components/AddCustomer";
+import { LoginContext } from "../App";
+import useFetch from "../hooks/UseFetch";
 
 export default function Customers() {
-  const [customers, setCustomers] = useState();
+  const [loggedIn, setLoggedIn] = useContext(LoginContext);
+  // const [customers, setCustomers] = useState();
   const [show, setShow] = useState(false);
 
   function toggleShow() {
     setShow(!show);
   }
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const url = baseUrl + "/api/customers/";
+  const {
+    request,
+    appendData,
+    data: { customers } = {},
+    errorStatus,
+  } = useFetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem("access"),
+    },
+  });
+
   useEffect(() => {
-    const url = baseUrl + "/api/customers/";
-    fetch(url)
-      .then((response) => {
-        console.log(response);
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
-        setCustomers(data.customers);
-      });
+    request();
   }, []);
 
+  // useEffect(() => {
+  //   console.log(request, appendData, customers, errorStatus);
+  // });
+
   function newCustomer(name, industry) {
-    const data = { name: name, industry: industry };
-    const url = baseUrl + "/api/customers/";
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Something went wrong");
-        }
-        return response.json();
-      })
-      .then((data) => {
-        //assume the add was successful
-        //hide the modal
-        toggleShow();
-        //make sure the list updated appropriately
-        console.log(data);
-        if (data.customer.id) {
-          setCustomers([...customers, data.customer]);
-        } else {
-          setCustomers([...customers]);
-        }
-      })
-      .catch((e) => {
-        console.log(e);
-      });
+    appendData({ name: name, industry: industry });
+
+    if (!errorStatus) {
+      toggleShow();
+    }
   }
 
   return (
